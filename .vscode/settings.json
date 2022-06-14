@@ -1,0 +1,14 @@
+{
+  "files.associations": {
+    "stdarg.h": "c",
+    "ctype.h": "c",
+    "assert.h": "c",
+    "fcntl.h": "c",
+    "unistd.h": "c",
+    "string.h": "c",
+    "stdio.h": "c",
+    "stdlib.h": "c",
+    "termios.h": "c",
+    "fs.h": "c"
+  }
+}
