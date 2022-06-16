@@ -500,8 +500,8 @@ sys_ioctl(void)
 
   if(f->ip->major < 0 || f->ip->major >= NDEV || !devsw[f->ip->major].ioctl)
     return -1;
-  printf("sys_ioctl\n");
-  printf("fd:%d\n", fd);
-  printf("request:%x\n", request);
+  // printf("sys_ioctl\n");
+  // printf("fd:%d\n", fd);
+  // printf("request:%x\n", request);
   return devsw[f->ip->major].ioctl(f->ip, request);
 }

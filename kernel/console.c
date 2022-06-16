@@ -145,7 +145,7 @@ consoleread(int user_dst, uint64 dst, int n)
 int
 consoleioctl(struct inode *ip, int req)
 {
-  printf("Into consoleioctl\n");
+  // printf("Into consoleioctl\n");
   // struct termios *termios_p;
   // uint64 termios_p = (uint64)&termios;
   uint64 termios_p;
@@ -161,13 +161,16 @@ consoleioctl(struct inode *ip, int req)
   //   //  printf("if");
   //    return -1;
   // }
-  // *ter
+
+  /*debug
   printf("In consoleioctl, termios_p: %d\n", termios_p);
   printf("In consoleioctl, cons.termios_p: %p\n", &cons.termios);
   printf("In consoleioctl, cons.termios.c_lflag: %x\n", cons.termios.c_lflag);
   printf("ECHO: %d\n", ECHO);
   printf("ICANON: %d\n", ICANON);
   printf("Size: %d\n", sizeof(struct termios));
+  */
+
   // printf("c_flag:%d\n", *termios_p->c_lflag);
   // printf("In consoleioctl, 2048.termios.c_lflag: %x\n", ((struct termios*)termios_p)->c_lflag);
   if(req == TCGETA)
@@ -179,7 +182,7 @@ consoleioctl(struct inode *ip, int req)
     // cons.termios = *(struct termios*)termios_p;
     {
       either_copyin(&cons.termios, 1, termios_p, sizeof(struct termios));
-      printf("In TCSETA, cons.termios.c_lflag: %x\n", cons.termios.c_lflag);
+      // printf("In TCSETA, cons.termios.c_lflag: %x\n", cons.termios.c_lflag);
     }
   return 0;
 }

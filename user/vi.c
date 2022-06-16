@@ -1,8 +1,8 @@
 #include "include/stdio.h"
-// #include "include/stdlib.h"
+#include "include/stdlib.h"
 #include "include/string.h"
 #include "include/fcntl.h"
-// #include "include/unistd.h"
+#include "include/unistd.h"
 #include "include/termios.h"
 
 // screen
@@ -10,6 +10,9 @@
 //  actual screen height is SCREEN_HEIGHT+1
 #define SCREEN_WIDTH  30
 #define SCREEN_HEIGHT 20
+
+// 清除屏幕
+#define CLEAR_SCREEN  "\033[H\033[J"
 
 // line buffer length
 #define LINE_BUFFER_LENGTH 128
@@ -196,7 +199,9 @@ void display(struct linebuffer *head){
   lbp = head;
 
   term_cursor_location(0,0);
-  fprintf(stdout,"\033[2J");
+  // fprintf(stdout,"\033[H\033[J");
+  // fprintf(stdout,"\033[2J");
+  fprintf(stdout,CLEAR_SCREEN);
   while(i-->0){
     fprintf(stdout, "%s", lbp->buf);
     lbp = lbp->next;
@@ -454,6 +459,7 @@ void input_mode_normal(char c){
     mode_change(MODE_INSERT);
     return;
   case 'h':
+  case 37:
     cursor_left();
     return;
   case 'j':
@@ -463,6 +469,7 @@ void input_mode_normal(char c){
     cursor_up();
     return;
   case 'l':
+  case 39:
     cursor_right();
     return;
   case 'x':
@@ -594,7 +601,10 @@ int main(int argc, char *argv[]){
   init_term();
 
   if(argc == 2){
+    // printf("arg: %s\n", argv[1]);
     strcpy(inputfilename, argv[1]);
+    // printf("inputfilename: %s\n", inputfilename);
+    // fflush(stdout);
     load();
   }
 
@@ -607,7 +617,8 @@ int main(int argc, char *argv[]){
   }
   printf("\n");
   term_cursor_location(0,0);
-  fprintf(stdout,"\033[2J");
+  // fprintf(stdout,"\033[2J");
+  fprintf(stdout, CLEAR_SCREEN);
 
   restore_term();
   cleanup();

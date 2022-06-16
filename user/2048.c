@@ -11,16 +11,16 @@ typedef int bool;
 
 struct termios termios, original_termios;
 
-/*设置输出背景色*/ 
+/*设置输出背景色,1表示粗体高亮 */ 
 #define BACK_NONE       "\033[0m"
-#define BACK_BLA        "\033[40m" //黑色
-#define BACK_RED        "\033[41m" //红色
-#define BACK_GREEN      "\033[42m" //绿色
-#define BACK_YELLOW     "\033[43m" //黄色
-#define BACK_BLUE       "\033[44m" //蓝色
-#define BACK_PUR        "\033[45m" //紫色
-#define BACK_CYA        "\033[46m" //青色
-#define BACK_WHI        "\033[47m" //白色
+#define BACK_BLA        "\033[1;40m" //黑色
+#define BACK_RED        "\033[1;41m" //红色
+#define BACK_GREEN      "\033[1;42m" //绿色
+#define BACK_YELLOW     "\033[1;43m" //黄色
+#define BACK_BLUE       "\033[1;44m" //蓝色
+#define BACK_PUR        "\033[1;45m" //紫色
+#define BACK_CYA        "\033[1;46m" //青色
+#define BACK_WHI        "\033[1;47m" //白色
 
 #define CLEAR_SCREEN  "\033[H\033[J"
 
@@ -223,13 +223,13 @@ void end(){
 
 int c2dir(char c){
   switch(c){
-  case 'w':
+  case 'w': case 'W': 
     return 0;
-  case 's':
+  case 's': case 'S': 
     return 1;
-  case 'd':
+  case 'd': case 'D': 
     return 2;
-  case 'a':
+  case 'a': case 'A': 
     return 3;
   default:
     return -1;
@@ -345,6 +345,7 @@ int main(){
       printf("waiting input...\n");
       fflush(stdout);
       read(0, &c, 1);
+      printf("your input is%d\n",c);
       if (c == 'q')
         // exit(0);
         end();

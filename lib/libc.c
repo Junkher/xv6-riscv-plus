@@ -171,7 +171,7 @@ int _flushbuf(int x, FILE *fp) {
 /* fflush */
 int fflush(FILE *f)
 {
-  printf("start fflush...\n");
+  // printf("start fflush...\n");
   int retval;
   int i;
 
@@ -190,7 +190,7 @@ int fflush(FILE *f)
     if (f->flag & _ERR)
       retval = -1;
   }
-  printf("fflush finished---\n");
+  // printf("fflush finished---\n");
   return retval;
 }
 
@@ -755,12 +755,27 @@ char *strchr(const char *str, int c)
   return NULL;
 }
 
-char *strcpy(char *dst, const char *src)
-{
-  char *d = dst;
 
-  while (*d++ == *src++);
-  return dst;
+// 字符串复制函数错误
+// char *strcpy(char *dst, const char *src)
+// {
+//   printf("strcpy\n");
+//   char *d = dst;
+
+//   while (*d++ == *src++);
+//   return dst;
+// }
+
+char*
+strcpy(char *s, const char *t)
+{
+  // printf("strcpy\n");
+  char *os;
+
+  os = s;
+  while((*s++ = *t++) != 0)
+    ;
+  return os;
 }
 
 char *strncpy(char *dst, const char *src, size_tt n)
@@ -817,7 +832,7 @@ memmove(void *dst, const void *src, size_tt n)
 
 int tcgetattr(int fd, struct termios *termios_p)
 {
-  printf("In tcgetattr, termios_p :%d\n", termios_p);
+  // printf("In tcgetattr, termios_p :%d\n", termios_p);
   return ioctl(fd, TCGETA, termios_p);
 }
 
