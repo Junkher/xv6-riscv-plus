@@ -193,6 +193,7 @@ void restore_term(){
   tcsetattr(0, TCSANOW, &original_termios);
   // 显示光标
   printf("\033[?25h");
+  printf(CLEAR_SCREEN);
   fflush(stdout);
 }
 

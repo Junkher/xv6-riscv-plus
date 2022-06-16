@@ -143,21 +143,17 @@ consoleread(int user_dst, uint64 dst, int n)
 
 // user ioctl()s to the console go here
 int
-consoleioctl(struct inode *ip, int req)
+consoleioctl(int request, uint64 termios_p)
 {
   // printf("Into consoleioctl\n");
   // struct termios *termios_p;
   // uint64 termios_p = (uint64)&termios;
-  uint64 termios_p;
-  if(req != TCGETA && req != TCSETA)
+  // uint64 termios_p;
+  if(request != TCGETA && request != TCSETA)
     return -1;
   // printf("TC\n");
   //tocheck 
-  if(argaddr(2, &termios_p) < 0){
-    //  printf("if");
-     return -1;
-  }
-  // if(argtermios(2, &termios_p) < 0){
+  // if(argaddr(2, &termios_p) < 0){
   //   //  printf("if");
   //    return -1;
   // }
@@ -173,7 +169,7 @@ consoleioctl(struct inode *ip, int req)
 
   // printf("c_flag:%d\n", *termios_p->c_lflag);
   // printf("In consoleioctl, 2048.termios.c_lflag: %x\n", ((struct termios*)termios_p)->c_lflag);
-  if(req == TCGETA)
+  if(request == TCGETA)
     // *termios_p = cons.termios;
     //  termios_p->c_lflag = cons.termios.c_lflag;
     either_copyout(1, termios_p, &cons.termios, sizeof(struct termios));

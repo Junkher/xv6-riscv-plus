@@ -492,16 +492,17 @@ sys_ioctl(void)
   int fd;
   struct file *f;
   int request;
+  uint64 termios_p;
 
-  if(argfd(0, &fd, &f) < 0 || argint(1, &request) < 0)
+  if(argfd(0, &fd, &f) < 0 || argint(1, &request) < 0 || argaddr(2, &termios_p) < 0)
     return -1;
   if(f->ip->type != T_DEVICE)
     return -1;
-
   if(f->ip->major < 0 || f->ip->major >= NDEV || !devsw[f->ip->major].ioctl)
     return -1;
+  
   // printf("sys_ioctl\n");
   // printf("fd:%d\n", fd);
   // printf("request:%x\n", request);
-  return devsw[f->ip->major].ioctl(f->ip, request);
+  return devsw[f->ip->major].ioctl(request, termios_p);
 }

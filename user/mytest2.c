@@ -1,8 +1,5 @@
-// #include "kernel/types.h"
-// #include "user/user.h"
-#include "include/stdio.h"
-#include "include/stdlib.h"
-#include "include/unistd.h"
+#include "kernel/types.h"
+#include "user/user.h"
 
 
 #define COLOR_NONE         			"\033[m"  
@@ -25,8 +22,7 @@
 #define BACK_YELLOW       "\033[1;43m" //背景黄色
 #define CLEAR_SCREEN    "\033[2J"
 
-// esc sequence
-#define term_cursor_location(x,y) fprintf(stdout, "\033[%d;%dH" ,y,x)
+#define term_cursor_location(x,y) fprintf(1, "\033[%d;%dH" ,y,x)
 
 #define chrSnake ((char)(219))
 
@@ -73,32 +69,19 @@ for(i = 0;i < SIZE;i++)
  printf("\n");
 }
 
+
 int main(){
+  // 无缓冲区，每一次printf都需要进入内核write
   printf("xv-riscv-printf!!!\n");
   printf(LIGHT_YELLOW"Yello\n"COLOR_NONE);
   printf(LIGHT_PURPLE"Purple\n"COLOR_NONE);
   printf(BACK_YELLOW"Back_Yello");
   printf(COLOR_NONE"\n");
-  fflush(stdout);
-  // for (int n = 1; n <= 1000; n++) {
-  //   printf("%d\n", n);
-  //   for(int i=1; i <= 100; i++)
-  //     printf("-", i);
-  // }
-  char c;
-  read(0, &c, 1);
-
-  // term_cursor_location(40, 40);
-  // printf("Hello World\n");
-  // system("pause");
   // char c;
-  // printf("starting\n");
-  // fflush(stdout);
   // read(0, &c, 1);
-  // fprintf(stdout,CLEAR_SCREEN);
-  // InitializeGame();
-  // PrintGame(map);
-  // fflush(stdout);
+  printf(CLEAR_SCREEN);
+  InitializeGame();
+  PrintGame(map);
   exit(0);
   return 0;
 
