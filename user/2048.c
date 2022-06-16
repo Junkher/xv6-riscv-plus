@@ -12,15 +12,17 @@ typedef int bool;
 struct termios termios, original_termios;
 
 /*设置输出背景色*/ 
-#define PRINT_BACK_BLA  printf("\033[40m"); //黑色
-#define PRINT_BACK_RED  printf("\033[41m"); //红色
-#define PRINT_BACK_GRE  printf("\033[42m"); //绿色
-#define PRINT_BACK_YEL  printf("\033[1;43m"); //黄色
-#define PRINT_BACK_BLU  printf("\033[44m"); //蓝色
-#define PRINT_BACK_PUR  printf("\033[45m"); //紫色
-#define PRINT_BACK_CYA  printf("\033[46m"); //青色
-#define PRINT_BACK_WHI  printf("\033[47m"); //白色
+#define BACK_NONE       "\033[0m"
+#define BACK_BLA        "\033[40m" //黑色
+#define BACK_RED        "\033[41m" //红色
+#define BACK_GREEN      "\033[42m" //绿色
+#define BACK_YELLOW     "\033[43m" //黄色
+#define BACK_BLUE       "\033[44m" //蓝色
+#define BACK_PUR        "\033[45m" //紫色
+#define BACK_CYA        "\033[46m" //青色
+#define BACK_WHI        "\033[47m" //白色
 
+#define CLEAR_SCREEN  "\033[H\033[J"
 
 #define UP    0
 #define DOWN  1
@@ -48,12 +50,13 @@ void print_int(int d)
 
 void changeColor(int b){
   if(b==0){
-    printf("\033[0m");
+    // 清除颜色
+    printf(BACK_NONE);
   } else {
     switch((b-1)%6){
     case 0:
       // printf("\033[1;43m");
-      PRINT_BACK_YEL;
+      printf(BACK_YELLOW);
       break;
     case 1:
       printf("\033[1;42m");
@@ -83,6 +86,8 @@ void showBoard(){
   printf("showBoard\n");
   // clear screen
   // printf("\033[2J");
+  printf(CLEAR_SCREEN);
+  // fflush(stdout);
   // printf("\033[1;1H");
   // draw
   for(i=0; i<4; i++){
@@ -333,11 +338,12 @@ int main(){
     printf("score: %d\n", score);
     printf("(enter \'q\' to exit...)\n");
     // printf("> ");
-    fflush(stdout);
+    // fflush(stdout);
     do{
       char c;
       // c = getchar();
       printf("waiting input...\n");
+      fflush(stdout);
       read(0, &c, 1);
       if (c == 'q')
         // exit(0);

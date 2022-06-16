@@ -171,7 +171,7 @@ int _flushbuf(int x, FILE *fp) {
 /* fflush */
 int fflush(FILE *f)
 {
-  // printf("start fflush...\n");
+  printf("start fflush...\n");
   int retval;
   int i;
 
@@ -190,7 +190,7 @@ int fflush(FILE *f)
     if (f->flag & _ERR)
       retval = -1;
   }
-  // printf("fflush finished---\n");
+  printf("fflush finished---\n");
   return retval;
 }
 
