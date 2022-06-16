@@ -8,6 +8,7 @@ struct spinlock;
 struct sleeplock;
 struct stat;
 struct superblock;
+struct termios;
 
 // bio.c
 void            binit(void);
@@ -133,6 +134,8 @@ char*           strncpy(char*, const char*, int);
 
 // syscall.c
 int             argint(int, int*);
+// int             argptr(int, char**, int);
+int             argtermios(int, struct termios**);
 int             argstr(int, char*, int);
 int             argaddr(int, uint64 *);
 int             fetchstr(uint64, char*, int);

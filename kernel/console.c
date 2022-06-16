@@ -21,6 +21,8 @@
 #include "riscv.h"
 #include "defs.h"
 #include "proc.h"
+#include "include/ioctl.h"
+#include "include/termios.h"
 
 #define BACKSPACE 0x100
 #define C(x)  ((x)-'@')  // Control-x
@@ -41,6 +43,8 @@ consputc(int c)
   }
 }
 
+
+
 struct {
   struct spinlock lock;
   
@@ -50,7 +54,16 @@ struct {
   uint r;  // Read index
   uint w;  // Write index
   uint e;  // Edit index
+  struct termios termios;
 } cons;
+
+
+void
+consechoc(int c)
+{
+  if(c != C('D') && cons.termios.c_lflag & ECHO)
+    consputc(c);
+}
 
 //
 // user write()s to the console go here.
@@ -58,6 +71,7 @@ struct {
 int
 consolewrite(int user_src, uint64 src, int n)
 {
+  // printf("consolewrite start...");
   int i;
 
   for(i = 0; i < n; i++){
@@ -66,7 +80,7 @@ consolewrite(int user_src, uint64 src, int n)
       break;
     uartputc(c);
   }
-
+  // printf("consolewrite finished---");
   return i;
 }
 
@@ -79,6 +93,7 @@ consolewrite(int user_src, uint64 src, int n)
 int
 consoleread(int user_dst, uint64 dst, int n)
 {
+  // printf("consoleread start...");
   uint target;
   int c;
   char cbuf;
@@ -98,7 +113,7 @@ consoleread(int user_dst, uint64 dst, int n)
 
     c = cons.buf[cons.r++ % INPUT_BUF];
 
-    if(c == C('D')){  // end-of-file
+    if(c == C('D') && cons.termios.c_lflag & ICANON){  // end-of-file
       if(n < target){
         // Save ^D for next time, to make sure
         // caller gets a 0-byte result.
@@ -106,25 +121,70 @@ consoleread(int user_dst, uint64 dst, int n)
       }
       break;
     }
-
-    // copy the input byte to the user-space buffer.
-    cbuf = c;
-    if(either_copyout(user_dst, dst, &cbuf, 1) == -1)
-      break;
+    if(cons.termios.c_lflag & ICANON) {
+        // copy the input byte to the user-space buffer.
+        cbuf = c;
+        if(either_copyout(user_dst, dst, &cbuf, 1) == -1)
+          break;
+    }
 
     dst++;
     --n;
 
-    if(c == '\n'){
+    if(c == '\n' && cons.termios.c_lflag & ICANON){
       // a whole line has arrived, return to
       // the user-level read().
       break;
     }
   }
   release(&cons.lock);
-
+  // printf("consoleread finished---");
   return target - n;
 }
+
+// user ioctl()s to the console go here
+int
+consoleioctl(struct inode *ip, int req)
+{
+  printf("Into consoleioctl\n");
+  // struct termios *termios_p;
+  // uint64 termios_p = (uint64)&termios;
+  uint64 termios_p;
+  if(req != TCGETA && req != TCSETA)
+    return -1;
+  // printf("TC\n");
+  //tocheck 
+  if(argaddr(2, &termios_p) < 0){
+    //  printf("if");
+     return -1;
+  }
+  // if(argtermios(2, &termios_p) < 0){
+  //   //  printf("if");
+  //    return -1;
+  // }
+  // *ter
+  printf("In consoleioctl, termios_p: %d\n", termios_p);
+  printf("In consoleioctl, cons.termios_p: %p\n", &cons.termios);
+  printf("In consoleioctl, cons.termios.c_lflag: %x\n", cons.termios.c_lflag);
+  printf("ECHO: %d\n", ECHO);
+  printf("ICANON: %d\n", ICANON);
+  printf("Size: %d\n", sizeof(struct termios));
+  // printf("c_flag:%d\n", *termios_p->c_lflag);
+  // printf("In consoleioctl, 2048.termios.c_lflag: %x\n", ((struct termios*)termios_p)->c_lflag);
+  if(req == TCGETA)
+    // *termios_p = cons.termios;
+    //  termios_p->c_lflag = cons.termios.c_lflag;
+    either_copyout(1, termios_p, &cons.termios, sizeof(struct termios));
+  else
+    // cons.termios = *termios_p;
+    // cons.termios = *(struct termios*)termios_p;
+    {
+      either_copyin(&cons.termios, 1, termios_p, sizeof(struct termios));
+      printf("In TCSETA, cons.termios.c_lflag: %x\n", cons.termios.c_lflag);
+    }
+  return 0;
+}
+
 
 //
 // the console input interrupt handler.
@@ -137,42 +197,45 @@ consoleintr(int c)
 {
   acquire(&cons.lock);
 
-  switch(c){
-  case C('P'):  // Print process list.
-    procdump();
-    break;
-  case C('U'):  // Kill line.
-    while(cons.e != cons.w &&
-          cons.buf[(cons.e-1) % INPUT_BUF] != '\n'){
-      cons.e--;
-      consputc(BACKSPACE);
+  if(cons.termios.c_lflag & ICANON){
+    switch(c){
+    case C('P'):  // Print process list.
+      procdump();
+      break;
+    case C('U'):  // Kill line.
+      while(cons.e != cons.w &&
+            cons.buf[(cons.e-1) % INPUT_BUF] != '\n'){
+        cons.e--;
+        // consputc(BACKSPACE);
+        consechoc(BACKSPACE);
+      }
+      break;
+    case C('H'): // Backspace
+    case '\x7f':
+      if(cons.e != cons.w){
+        cons.e--;
+        // consputc(BACKSPACE);
+        consechoc(BACKSPACE);
+      }
+      break;
     }
-    break;
-  case C('H'): // Backspace
-  case '\x7f':
-    if(cons.e != cons.w){
-      cons.e--;
-      consputc(BACKSPACE);
-    }
-    break;
-  default:
-    if(c != 0 && cons.e-cons.r < INPUT_BUF){
+  }
+  if(c != 0 && cons.e-cons.r < INPUT_BUF){
       c = (c == '\r') ? '\n' : c;
 
       // echo back to the user.
-      consputc(c);
+      // consputc(c);
+      consechoc(c);
 
       // store for consumption by consoleread().
       cons.buf[cons.e++ % INPUT_BUF] = c;
 
-      if(c == '\n' || c == C('D') || cons.e == cons.r+INPUT_BUF){
+      if(c == '\n' || c == C('D') || cons.e == cons.r+INPUT_BUF || (cons.termios.c_lflag & ICANON) == 0){
         // wake up consoleread() if a whole line (or end-of-file)
         // has arrived.
         cons.w = cons.e;
         wakeup(&cons.r);
       }
-    }
-    break;
   }
   
   release(&cons.lock);
@@ -189,4 +252,7 @@ consoleinit(void)
   // to consoleread and consolewrite.
   devsw[CONSOLE].read = consoleread;
   devsw[CONSOLE].write = consolewrite;
+  devsw[CONSOLE].ioctl = consoleioctl;
+
+  cons.termios.c_lflag = ECHO | ICANON;
 }

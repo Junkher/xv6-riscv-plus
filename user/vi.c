@@ -1,8 +1,8 @@
 #include "include/stdio.h"
-#include "include/stdlib.h"
+// #include "include/stdlib.h"
 #include "include/string.h"
 #include "include/fcntl.h"
-#include "include/unistd.h"
+// #include "include/unistd.h"
 #include "include/termios.h"
 
 // screen
@@ -375,7 +375,7 @@ void save(){
   FILE *ofile;
   struct linebuffer *lbp;
 
-  ofile = open(outputfilename, "w+");
+  ofile = fopen(outputfilename, "w+");
 
   lbp = linebuffer_head.next;
   while(lbp != &linebuffer_tail){
@@ -613,4 +613,5 @@ int main(int argc, char *argv[]){
   cleanup();
 
   exit(0);
+  return 0;
 }

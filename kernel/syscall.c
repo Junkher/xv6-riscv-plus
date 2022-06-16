@@ -61,13 +61,39 @@ argint(int n, int *ip)
   return 0;
 }
 
+// // Fetch the nth word-sized system call argument as a pointer
+// // to a block of memory of size n bytes.  Check that the pointer
+// // lies within the process address space.
+// int
+// argptr(int n, char **pp, int size)
+// {
+//   int i;
+//   struct proc *p = myproc();
+//   if(argint(n, &i) < 0)
+//     return -1;
+//   if((uint)i >= p->sz || (uint)i+size > p->sz)
+//     return -1;
+//   *pp = (char*)i;
+//   return 0;
+// }
+
 // Retrieve an argument as a pointer.
 // Doesn't check for legality, since
 // copyin/copyout will do that.
 int
 argaddr(int n, uint64 *ip)
 {
+
   *ip = argraw(n);
+  // printf("argaddr : %d\n", *ip);
+  return 0;
+}
+
+int
+argtermios(int n, struct termios** pp)
+{
+  *pp = (struct termios*)argraw(n);
+  // printf("argaddr : %d\n", *ip);
   return 0;
 }
 
@@ -104,6 +130,7 @@ extern uint64 sys_unlink(void);
 extern uint64 sys_wait(void);
 extern uint64 sys_write(void);
 extern uint64 sys_uptime(void);
+extern uint64 sys_ioctl(void);
 
 static uint64 (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -127,6 +154,7 @@ static uint64 (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
+[SYS_ioctl]   sys_ioctl,
 };
 
 void

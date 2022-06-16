@@ -112,9 +112,13 @@ $U/_2048: $U/2048.o $(LIBC)
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $U/_2048 $U/2048.o $L/libc.o $U/usys.o
 	$(OBJDUMP) -S $U/_2048 > $U/2048.asm
 
-$U/_vi: $U/vi.o $(LIBC)
-	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $U/_vi $U/vi.o $L/libc.o $U/usys.o
-	$(OBJDUMP) -S $U/_vi > $U/vi.asm
+# $U/_2049: $U/2049.o $(LIBC)
+# 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $U/_2049 $U/2049.o $L/libc.o $U/usys.o
+# 	$(OBJDUMP) -S $U/_2049 > $U/2049.asm
+
+# $U/_vi: $U/vi.o $(LIBC)
+# 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $U/_vi $U/vi.o $L/libc.o $U/usys.o
+# 	$(OBJDUMP) -S $U/_vi > $U/vi.asm
 
 mkfs/mkfs: mkfs/mkfs.c $K/fs.h $K/param.h
 	gcc -Werror -Wall -I. -o mkfs/mkfs mkfs/mkfs.c
@@ -142,8 +146,10 @@ UPROGS=\
 	$U/_grind\
 	$U/_wc\
 	$U/_zombie\
+	$U/_mytest\
 	$U/_2048\
-	$U/_vi\
+	# $U/_2049\
+	# $U/_vi\
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)

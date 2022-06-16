@@ -112,7 +112,7 @@ void showBoard(){
   }
 
   printf("+------+------+------+------+\n");
-  printf("showBoard finished\n");
+  // printf("showBoard finished\n");
 }
 
 
@@ -356,3 +356,14 @@ int main(){
   end();
   return 0;
 }
+
+// int main(){
+//   printf("gg\n");
+//   // for (int n = 1; n <= 1000; n++) {
+//   //   printf("%d\n", n);
+//   //   for(int i=1; i <= 100; i++)
+//   //     printf("-", i);
+//   // }
+//   exit(0);
+//   return 0;
+// }

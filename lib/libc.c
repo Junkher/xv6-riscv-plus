@@ -9,6 +9,9 @@
 #include "include/string.h"
 #include "include/unistd.h"
 #include "include/fcntl.h"
+#include "include/termios.h"
+#include "include/ioctl.h"
+// #include "user/user.h"
 
 
 #define max(m, n)   ((m) > (n) ? (m) : (n))
@@ -116,6 +119,7 @@ int _fillbuf(FILE *fp) {
 
 int _flushbuf(int x, FILE *fp) {
 
+  // printf("start _flushbuf...\n");
   int num_written=0, bufsize=0;
   unsigned char uc = x;
 
@@ -167,6 +171,7 @@ int _flushbuf(int x, FILE *fp) {
 /* fflush */
 int fflush(FILE *f)
 {
+  // printf("start fflush...\n");
   int retval;
   int i;
 
@@ -180,10 +185,12 @@ int fflush(FILE *f)
   } else {
     if ((f->flag & _WRITE) == 0)
       return -1;
+   
     _flushbuf(EOF, f);
     if (f->flag & _ERR)
       retval = -1;
   }
+  // printf("fflush finished---\n");
   return retval;
 }
 
@@ -803,4 +810,24 @@ memmove(void *dst, const void *src, size_tt n)
       *d++ = *s++;
 
   return dst;
+}
+
+
+/* termios.h */
+
+int tcgetattr(int fd, struct termios *termios_p)
+{
+  printf("In tcgetattr, termios_p :%d\n", termios_p);
+  return ioctl(fd, TCGETA, termios_p);
+}
+
+int tcsetattr(int fd, int optional_actions, const struct termios *termios_p)
+{
+  return ioctl(fd, TCSETA, termios_p);
+}
+
+void cfmakeraw(struct termios *termios_p)
+{
+  // Ignore optional_actions
+  termios_p->c_lflag = 0;
 }
