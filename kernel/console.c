@@ -21,8 +21,7 @@
 #include "riscv.h"
 #include "defs.h"
 #include "proc.h"
-#include "include/ioctl.h"
-#include "include/termios.h"
+#include "termios.h"
 
 #define BACKSPACE 0x100
 #define C(x)  ((x)-'@')  // Control-x

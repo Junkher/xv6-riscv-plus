@@ -10,7 +10,6 @@
 #include "include/unistd.h"
 #include "include/fcntl.h"
 #include "include/termios.h"
-#include "include/ioctl.h"
 // #include "user/user.h"
 
 
@@ -827,8 +826,9 @@ memmove(void *dst, const void *src, size_tt n)
   return dst;
 }
 
-
 /* termios.h */
+#define TCGETA		0x5405
+#define TCSETA		0x5406
 
 int tcgetattr(int fd, struct termios *termios_p)
 {

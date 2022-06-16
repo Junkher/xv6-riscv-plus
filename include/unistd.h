@@ -27,6 +27,7 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
-int halt(void);
+// int halt(void);
+int ioctl(int, unsigned long, ...);
 
 #endif  /* unistd.h */

@@ -2,8 +2,6 @@
 #include "include/stdio.h"
 #include "include/stdlib.h"
 #include "include/termios.h"
-// #include "kernel/types.h"
-// #include "user/user.h"
 
 #define true  1
 #define false 0

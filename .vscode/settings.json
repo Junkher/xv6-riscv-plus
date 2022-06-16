@@ -29,6 +29,7 @@
     "spinlock.h": "c",
     "param.h": "c",
     "sleeplock.h": "c",
-    "ioctl.h": "c"
+    "ioctl.h": "c",
+    "limits.h": "c"
   }
 }
