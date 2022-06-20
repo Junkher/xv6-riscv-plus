@@ -109,3 +109,14 @@ sys_clone(void)
     return -1;
   return clone((void*)function, (void*)arg, (void*)stack);
 }
+
+
+// clone
+uint64 
+sys_join(void)
+{
+  // uint64 stack;
+  // if(argaddr(0, &stack) < 0)
+  //   return -1;
+  return join();
+}

@@ -4,6 +4,7 @@
 #include "include/stdlib.h"
 #include "include/unistd.h"
 #include "kernel/types.h"
+#include "include/termios.h"
 
 
 #define COLOR_NONE         			"\033[m"  
@@ -33,7 +34,36 @@
 
 #define SIZE 40
 
+int STATUS =0;
+
 int map[SIZE][SIZE] = {0};
+
+
+
+struct termios termios, original_termios;
+
+
+
+void init_term(){
+  tcgetattr(0, &termios);
+  original_termios = termios;
+  cfmakeraw(&termios);
+  tcsetattr(0, TCSANOW, &termios);
+  // 隐藏光标
+  printf("\033[?25l");
+  // printf("?????\n");
+  fflush(stdout);
+  printf("init_term finished\n");
+}
+
+void restore_term(){
+  tcsetattr(0, TCSANOW, &original_termios);
+  // 显示光标
+  printf("\033[?25h");
+  // printf(CLEAR_SCREEN);
+  fflush(stdout);
+}
+
 
 
 void InitializeGame()
@@ -126,19 +156,26 @@ void TestClone() {
 void thread(void *arg) {
 	int id = *(int*)arg;
 	printf("thread %d: started...\n", id);
-  // for(int i =0 ;;i++) {
-  //   printf("t");
-  // }
   fflush(stdout);
+  for(int i =0 ;;i++) {
+    sleep(5);
+    if(STATUS) {
+        printf("1");
+    } else {
+        printf("2");
+    }
+    fflush(stdout);
+  }
+  // fflush(stdout);
   exit(0);
   // for(int i=0; ; i++) {
   //       write(1, "t", 1);
   // }
 }
 
-
 int main(){
 
+  init_term();
   printf("starting...\n");
   
   void* stack1;
@@ -162,10 +199,29 @@ int main(){
   // printf("user> after clone\n");
   // fflush(stdout);
   char c;
-  read(0, &c, 1);
+
   printf("user> after clone\n");
-  printf("%s\n", c);
+  // printf("%s\n", c);
+  // for(int i =0 ;i < 10000;i++) {
+  //   printf("p");
+  // }
+  while(1) {
+    read(0, &c, 1);
+    if(c == 'a')
+       STATUS = 1;
+    else if (c == 'd')
+       STATUS = 0;
+    else
+       break;
+  }
+  // for(int i =0 ; i < 10;i++) {
+  //   // sleep(5);
+  //   printf("p\n");
+  // }
+  fflush(stdout);
   // wait();
+  join();
+  restore_term();
   exit(0);
   return 0;
 

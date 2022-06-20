@@ -108,6 +108,7 @@ int             either_copyin(void *dst, int user_src, uint64 src, uint64 len);
 void            procdump(void);
 
 int             clone(void* function, void* argv, void* stack);
+int             join(void);
 
 // swtch.S
 void            swtch(struct context*, struct context*);

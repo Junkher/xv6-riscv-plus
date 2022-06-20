@@ -38,4 +38,4 @@ entry("sleep");
 entry("uptime");
 entry("ioctl");
 entry("clone");
-# entry("join");
+entry("join");

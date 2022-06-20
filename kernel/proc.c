@@ -850,7 +850,7 @@ clone(void* function, void *arg, void *stack)
 }
 
 int
-join(void** stack)
+join()
 {
   struct proc *np;
   int havekids, pid;
@@ -872,15 +872,16 @@ join(void** stack)
       if(np->state == ZOMBIE){
         // Found one.
         pid = np->pid;
-        *stack = np -> ustack;
-        np->sz = 0;
-        np->pid = 0;
-        np->parent = 0;
-        np->name[0] = 0;
-        np->chan = 0;
-        np->killed = 0;
-        np->xstate = 0;
-        np->state = UNUSED;
+        // *stack = np -> ustack;
+        // np->sz = 0;
+        // np->pid = 0;
+        // np->parent = 0;
+        // np->name[0] = 0;
+        // np->chan = 0;
+        // np->killed = 0;
+        // np->xstate = 0;
+        // np->state = UNUSED;
+        freethread(np);
         release(&np->lock);
         release(&wait_lock);
         return pid;

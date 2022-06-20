@@ -30,5 +30,6 @@ int uptime(void);
 // int halt(void);
 int ioctl(int, unsigned long, ...);
 int clone(void*, void*, void*);
+int join();
 
 #endif  /* unistd.h */
