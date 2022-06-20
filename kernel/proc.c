@@ -765,45 +765,39 @@ clone(void* function, void *arg, void *stack)
 
 
   *(np->trapframe) = *(p->trapframe);
-	//clear %eax so that fork returns 0 in the child.
+
+  // 看.asm可以很明显发现a0就是存参数的寄存器，
 	np->trapframe->a0 = (uint64)arg;
-	// modified the return ip to thread function, 巨坑
+	// modified the return ip to thread function, 注意！！！
 	np->trapframe->ra = (uint64)function;
-  printf("kernel> p->trapframe->ra:%p\n", p->trapframe->ra);
-  printf("kernel> p->trapframe->epc:%p\n", p->trapframe->epc);
-  printf("kernel> np->trapframe->epc:%p\n", np->trapframe->epc);
+  // printf("kernel> p->trapframe->ra:%p\n", p->trapframe->ra);
+  // printf("kernel> p->trapframe->epc:%p\n", p->trapframe->epc);
+  // printf("kernel> np->trapframe->epc:%p\n", np->trapframe->epc);
 
 	//modified the thread indicator's value
 	np->isthread = 1;
 
   // printf("kernel> np->trapframe->ra:%p\n", np->trapframe->ra);
 
-  printf("kernel> function:%p\n", function);
-  printf("kernel> arg:%p\n", arg);
-  printf("kernel> stack:%p\n", stack);
+  // printf("kernel> function:%p\n", function);
+  // printf("kernel> arg:%p\n", arg);
+  // printf("kernel> stack:%p\n", stack);
 	//modified the stack
 	np->ustack = stack;
   // int *sp = stack + 4096 -8;
 	np->trapframe->sp = (uint64)stack + 4096 - 16; //move esp to the top of the new stack
-	// *((int *)(np->tf->esp)) = (int)arg; // push the argument
-	// *((int *)(np->tf->esp -4)) = 0xFFFFFFFF; //push the return address
-	// np->tf->esp-=4;
-  // *((char *)(np->trapframe->sp + 8)) = (uint64)arg; // push the argument
-	// *((char *)(np->trapframe->sp)) = 0xFFFFFFFF; //push the return address
-  // *(sp + 1) = (int)arg;
-  // *sp = 0xFFFFFFFF;
 
-  printf("np->trapframe->sp:%p\n", np->trapframe->sp);
-  printf("np->trapframe->sp + 8:%p\n", np->trapframe->sp + 8);
+  // printf("np->trapframe->sp:%p\n", np->trapframe->sp);
+  // printf("np->trapframe->sp + 8:%p\n", np->trapframe->sp + 8);
   uint64 ret = 0xFFFFFFFFFFFFFFFF;
 
-  printf("ready copy_out...\n");
+  // printf("ready copy_out...\n");
 
   // printf("ret:%p\n", ret);
   // printf("&ret:%p\n", &ret);
   either_copyout(1, np->trapframe->sp + 8, &arg, 8);
   either_copyout(1, np->trapframe->sp, &ret, 8);
-  printf("copy_out finished---\n");
+  // printf("copy_out finished---\n");
 
   // increment reference counts
 	for(i = 0; i < NOFILE; i++)
@@ -815,17 +809,15 @@ clone(void* function, void *arg, void *stack)
 
 	pid = np->pid;
 
-  printf("before release np->lock:%d\n", np->lock.locked);
 
   release(&np->lock);
 
-  printf("after release np->lock:%d\n", np->lock.locked);
 
-  printf("p->pid: %d\n", p->pid);
-  printf("p->name: %s\n", p->name);
+  // printf("p->pid: %d\n", p->pid);
+  // printf("p->name: %s\n", p->name);
   // printf("p->parent->pid: %d\n", p->parent->pid);
   // printf("p->parent->name: %s\n", p->parent->name);
-  printf("p->isthread: %d\n", p->isthread);
+  // printf("p->isthread: %d\n", p->isthread);
   acquire(&wait_lock);
 	// 如果p本身是一个线程，那么np和p的parent应该是同一个，若p不是线程，则令np->parent=p
 	if(p->isthread == 0){
@@ -834,15 +826,13 @@ clone(void* function, void *arg, void *stack)
 		np->parent = p->parent;
 	}
   release(&wait_lock);
-
-  printf(" release(&wait_lock)\n");
 	//lock to force the compiler to emit the np->state write last.
 	acquire(&np->lock);
 	np->state = RUNNABLE;
 	release(&np->lock);
-  printf("clone finish---\n");
-  printf("new thread pid: %d\n", np->pid);
-  printf("new thread name: %s\n", np->name);
+  // printf("clone finish---\n");
+  // printf("new thread pid: %d\n", np->pid);
+  // printf("new thread name: %s\n", np->name);
 	//exit
 	return pid;	
   // printf("clone");	

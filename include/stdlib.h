@@ -8,8 +8,8 @@
 void abort(void);
 int abs(int);
 long strtol(const char *, char **, int);
-int rand(void);
-void srand(unsigned);
+// int rand(void);
+// void srand(unsigned);
 void *malloc(size_tt);
 void *realloc(void *, size_tt);
 void *calloc(size_tt, size_tt);

@@ -124,6 +124,10 @@ $U/_mytest: $U/mytest.o $(LIBC)
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $U/_mytest $U/mytest.o $L/libc.o $U/usys.o
 	$(OBJDUMP) -S $U/_mytest > $U/mytest.asm
 
+$U/_snake: $U/snake.o $(LIBC)
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $U/_snake $U/snake.o $L/libc.o $U/usys.o
+	$(OBJDUMP) -S $U/_snake > $U/snake.asm
+
 mkfs/mkfs: mkfs/mkfs.c $K/fs.h $K/param.h
 	gcc -Werror -Wall -I. -o mkfs/mkfs mkfs/mkfs.c
 
@@ -154,6 +158,7 @@ UPROGS=\
 	$U/_mytest2\
 	$U/_2048\
 	$U/_vi\
+	$U/_snake\
 	# $U/_2049\
 
 

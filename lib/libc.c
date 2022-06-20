@@ -10,6 +10,7 @@
 #include "include/unistd.h"
 #include "include/fcntl.h"
 #include "include/termios.h"
+#include "include/math.h"
 // #include "user/user.h"
 
 
@@ -845,4 +846,31 @@ void cfmakeraw(struct termios *termios_p)
 {
   // Ignore optional_actions
   termios_p->c_lflag = 0;
+}
+
+
+static unsigned int rand_seed;
+
+int random(int min, int max)
+{
+	static int flag=0;
+	if(flag==0){
+		mysrand(uptime());
+		myrand();
+		flag=1;
+	}else{
+		myrand();
+	}
+	int rand = min+rand_seed%(max-min);
+	return rand;
+}
+
+void mysrand(unsigned int seed)
+{
+	rand_seed = seed;
+}
+
+void myrand()
+{
+	rand_seed = (rand_seed * 16807);
 }

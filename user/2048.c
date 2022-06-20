@@ -33,7 +33,7 @@ int board[4][4];
 int score;
   
 
-int myrand(int n) {
+int rand(int n) {
   static int lcg = 0;
   int x;
   lcg = 1664525 * lcg + 1013904223;
@@ -160,13 +160,13 @@ bool gameover(){
 
 void putNum(){
   int n, b;
-  if(myrand(10)==0)
+  if(rand(10)==0)
     n=2;
   else
     n=1;
 
   do{
-    b = myrand(16);
+    b = rand(16);
   } while(board[b%4][b/4] != 0);
   board[b%4][b/4] = n;
 }
@@ -204,7 +204,7 @@ void init(){
 
   score = 0;
 
-  b = myrand(16);
+  b = rand(16);
   board[b%4][b/4] = 1;
   
   putNum();
