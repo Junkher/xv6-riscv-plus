@@ -125,7 +125,14 @@ usertrapret(void)
   // switches to the user page table, restores user registers,
   // and switches to user mode with sret.
   uint64 fn = TRAMPOLINE + (userret - trampoline);
-  ((void (*)(uint64,uint64))fn)(TRAPFRAME, satp);
+  
+  // 如果是线程，则要计算另外的TRAPFRAME。
+  // printf("p->trapframe: %x\n", p->trapframe);
+  // printf("TRAPFRAME %x\n", TRAPFRAME);
+  if(p->isthread)
+    ((void (*)(uint64,uint64))fn)(TRAPFRAME - PGSIZE * p->tid, satp);
+  else
+    ((void (*)(uint64,uint64))fn)(TRAPFRAME, satp);
 }
 
 // interrupts and exceptions from kernel code go here via kernelvec,
@@ -146,6 +153,7 @@ kerneltrap()
   if((which_dev = devintr()) == 0){
     printf("scause %p\n", scause);
     printf("sepc=%p stval=%p\n", r_sepc(), r_stval());
+    printf("procid:%d\n", myproc()->parent);
     panic("kerneltrap");
   }
 

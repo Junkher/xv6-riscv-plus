@@ -17,6 +17,7 @@ struct spinlock pid_lock;
 
 extern void forkret(void);
 static void freeproc(struct proc *p);
+static void freethread(struct proc *p);
 
 extern char trampoline[]; // trampoline.S
 
@@ -144,6 +145,48 @@ found:
   return p;
 }
 
+// Look in the process table for an UNUSED proc.
+// If found, initialize state required to run in the kernel,
+static struct proc*
+allocthread(void)
+{
+  struct proc *p;
+
+  for(p = proc; p < &proc[NPROC]; p++) {
+    acquire(&p->lock);
+    if(p->state == UNUSED) {
+      goto found;
+    } else {
+      release(&p->lock);
+    }
+  }
+  return 0;
+
+found:
+  p->pid = allocpid();
+  p->state = USED;
+  p->isthread = 1;
+
+  // Allocate a trapframe page.
+  if((p->trapframe = (struct trapframe *)kalloc()) == 0){
+    freeproc(p);
+    release(&p->lock);
+    return 0;
+  }
+
+  // use the parent's pagetable
+
+
+  // Set up new context to start executing at forkret,
+  // which returns to user space.
+  memset(&p->context, 0, sizeof(p->context));
+  p->context.ra = (uint64)forkret;
+  p->context.sp = p->kstack + PGSIZE;
+
+  return p;
+}
+
+
 // free a proc structure and the data hanging from it,
 // including user pages.
 // p->lock must be held.
@@ -164,6 +207,33 @@ freeproc(struct proc *p)
   p->killed = 0;
   p->xstate = 0;
   p->state = UNUSED;
+  // add
+  p->tfcount = 0;
+  p->tid = 0;
+}
+
+// free a thread
+static void
+freethread(struct proc *p)
+{
+  if(p->trapframe)
+    kfree((void*)p->trapframe);
+  p->trapframe = 0;
+  if(p->pagetable)
+    thread_freepagetable(p->pagetable, p->tid);
+  p->pagetable = 0;
+  p->sz = 0;
+  p->pid = 0;
+  p->parent = 0;
+  p->name[0] = 0;
+  p->chan = 0;
+  p->killed = 0;
+  p->xstate = 0;
+  p->state = UNUSED;
+  // add
+  p->tfcount = 0;
+  p->tid = 0;
+  p->ustack = 0;
 }
 
 // Create a user page table for a given process,
@@ -207,6 +277,14 @@ proc_freepagetable(pagetable_t pagetable, uint64 sz)
   uvmunmap(pagetable, TRAMPOLINE, 1, 0);
   uvmunmap(pagetable, TRAPFRAME, 1, 0);
   uvmfree(pagetable, sz);
+}
+
+
+// 当线程退出，只需要释放页表中属于该线程的trapframe即可
+void
+thread_freepagetable(pagetable_t pagetable, int tid)
+{
+  uvmunmap(pagetable, TRAPFRAME - PGSIZE * tid, 1, 0);
 }
 
 // a user program that calls exec("/init")
@@ -345,11 +423,14 @@ exit(int status)
     panic("init exiting");
 
   // Close all open files.
-  for(int fd = 0; fd < NOFILE; fd++){
-    if(p->ofile[fd]){
-      struct file *f = p->ofile[fd];
-      fileclose(f);
-      p->ofile[fd] = 0;
+  if(!p->isthread)
+  {
+    for(int fd = 0; fd < NOFILE; fd++){
+      if(p->ofile[fd]){
+        struct file *f = p->ofile[fd];
+        fileclose(f);
+        p->ofile[fd] = 0;
+      }
     }
   }
 
@@ -370,7 +451,7 @@ exit(int status)
 
   p->xstate = status;
   p->state = ZOMBIE;
-
+  // printf("%d exit\n", p->pid);
   release(&wait_lock);
 
   // Jump into the scheduler, never to return.
@@ -407,7 +488,11 @@ wait(uint64 addr)
             release(&wait_lock);
             return -1;
           }
-          freeproc(np);
+          // 判断是否为线程
+          if(np->isthread)
+            freethread(np);
+          else
+            freeproc(np);
           release(&np->lock);
           release(&wait_lock);
           return pid;
@@ -451,6 +536,7 @@ scheduler(void)
         // Switch to chosen process.  It is the process's job
         // to release its lock and then reacquire it
         // before jumping back to us.
+        // printf("proc %d is running...\n", p->pid);
         p->state = RUNNING;
         c->proc = p;
         swtch(&c->context, &p->context);
@@ -652,5 +738,164 @@ procdump(void)
       state = "???";
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
+  }
+}
+
+
+
+int 
+clone(void* function, void *arg, void *stack)
+{
+	int i, pid;
+  struct proc *p = myproc();
+	struct proc *np;
+
+	//Allocate process
+	if((np = allocthread())==0)
+		return -1;
+	np->sz = p->sz;
+  np->tid = ++(p->tfcount);
+  // printf("kernel> p->trapframe->sp:%p\n", p->trapframe->sp);
+
+  // expand the user page table for a given process, add PTE for the new thread
+	if(mappages(p->pagetable, TRAPFRAME - PGSIZE* np->tid, PGSIZE, (uint64)(np->trapframe), PTE_R | PTE_W) < 0) {
+    return 0;
+  }
+  np->pagetable = p->pagetable;
+
+
+  *(np->trapframe) = *(p->trapframe);
+	//clear %eax so that fork returns 0 in the child.
+	np->trapframe->a0 = (uint64)arg;
+	// modified the return ip to thread function, 巨坑
+	np->trapframe->ra = (uint64)function;
+  printf("kernel> p->trapframe->ra:%p\n", p->trapframe->ra);
+  printf("kernel> p->trapframe->epc:%p\n", p->trapframe->epc);
+  printf("kernel> np->trapframe->epc:%p\n", np->trapframe->epc);
+
+	//modified the thread indicator's value
+	np->isthread = 1;
+
+  // printf("kernel> np->trapframe->ra:%p\n", np->trapframe->ra);
+
+  printf("kernel> function:%p\n", function);
+  printf("kernel> arg:%p\n", arg);
+  printf("kernel> stack:%p\n", stack);
+	//modified the stack
+	np->ustack = stack;
+  // int *sp = stack + 4096 -8;
+	np->trapframe->sp = (uint64)stack + 4096 - 16; //move esp to the top of the new stack
+	// *((int *)(np->tf->esp)) = (int)arg; // push the argument
+	// *((int *)(np->tf->esp -4)) = 0xFFFFFFFF; //push the return address
+	// np->tf->esp-=4;
+  // *((char *)(np->trapframe->sp + 8)) = (uint64)arg; // push the argument
+	// *((char *)(np->trapframe->sp)) = 0xFFFFFFFF; //push the return address
+  // *(sp + 1) = (int)arg;
+  // *sp = 0xFFFFFFFF;
+
+  printf("np->trapframe->sp:%p\n", np->trapframe->sp);
+  printf("np->trapframe->sp + 8:%p\n", np->trapframe->sp + 8);
+  uint64 ret = 0xFFFFFFFFFFFFFFFF;
+
+  printf("ready copy_out...\n");
+
+  // printf("ret:%p\n", ret);
+  // printf("&ret:%p\n", &ret);
+  either_copyout(1, np->trapframe->sp + 8, &arg, 8);
+  either_copyout(1, np->trapframe->sp, &ret, 8);
+  printf("copy_out finished---\n");
+
+  // increment reference counts
+	for(i = 0; i < NOFILE; i++)
+		if(p->ofile[i])
+			np->ofile[i] = filedup(p->ofile[i]);
+	np->cwd = idup(p->cwd);
+
+	safestrcpy(np->name, p->name, sizeof(p->name));
+
+	pid = np->pid;
+
+  printf("before release np->lock:%d\n", np->lock.locked);
+
+  release(&np->lock);
+
+  printf("after release np->lock:%d\n", np->lock.locked);
+
+  printf("p->pid: %d\n", p->pid);
+  printf("p->name: %s\n", p->name);
+  // printf("p->parent->pid: %d\n", p->parent->pid);
+  // printf("p->parent->name: %s\n", p->parent->name);
+  printf("p->isthread: %d\n", p->isthread);
+  acquire(&wait_lock);
+	// 如果p本身是一个线程，那么np和p的parent应该是同一个，若p不是线程，则令np->parent=p
+	if(p->isthread == 0){
+		np->parent = p;
+	}else{
+		np->parent = p->parent;
+	}
+  release(&wait_lock);
+
+  printf(" release(&wait_lock)\n");
+	//lock to force the compiler to emit the np->state write last.
+	acquire(&np->lock);
+	np->state = RUNNABLE;
+	release(&np->lock);
+  printf("clone finish---\n");
+  printf("new thread pid: %d\n", np->pid);
+  printf("new thread name: %s\n", np->name);
+	//exit
+	return pid;	
+  // printf("clone");	
+  // return 0;
+}
+
+int
+join(void** stack)
+{
+  struct proc *np;
+  int havekids, pid;
+  struct proc *p = myproc();
+
+  acquire(&wait_lock);
+
+  for(;;){
+    // Scan through table looking for exited children.
+    havekids = 0;
+    for(np = proc; np < &proc[NPROC]; np++){
+      //only wait for the child thred, but not the child process
+      if(np->parent != p || np ->isthread != 1)
+        continue;
+      
+      havekids = 1;
+      // make sure the child isn't still in exit() or swtch().
+      acquire(&np->lock);
+      if(np->state == ZOMBIE){
+        // Found one.
+        pid = np->pid;
+        *stack = np -> ustack;
+        np->sz = 0;
+        np->pid = 0;
+        np->parent = 0;
+        np->name[0] = 0;
+        np->chan = 0;
+        np->killed = 0;
+        np->xstate = 0;
+        np->state = UNUSED;
+        release(&np->lock);
+        release(&wait_lock);
+        return pid;
+      }
+      release(&np->lock);
+    }
+
+    // No point waiting if we don't have any children.
+    if(!havekids || p->killed){
+      release(&wait_lock);
+      return -1;
+    }
+    
+    // Wait for a child to exit.
+    sleep(p, &wait_lock);  //DOC: wait-sleep
+  
   }
 }

@@ -24,6 +24,8 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 int ioctl(int, unsigned long, ...);
+int clone(void*, void*, void*);
+// int clone(uint64, uint64, uint64);
 
 // ulib.c
 int stat(const char*, struct stat*);

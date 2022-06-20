@@ -3,6 +3,7 @@
 #include "include/stdio.h"
 #include "include/stdlib.h"
 #include "include/unistd.h"
+#include "kernel/types.h"
 
 
 #define COLOR_NONE         			"\033[m"  
@@ -73,32 +74,98 @@ for(i = 0;i < SIZE;i++)
  printf("\n");
 }
 
-int main(){
-  printf("xv-riscv-printf!!!\n");
+
+void TestColor() {
+  /*测试颜色*/
   printf(LIGHT_YELLOW"Yello\n"COLOR_NONE);
   printf(LIGHT_PURPLE"Purple\n"COLOR_NONE);
   printf(BACK_YELLOW"Back_Yello");
   printf(COLOR_NONE"\n");
   fflush(stdout);
-  // for (int n = 1; n <= 1000; n++) {
+}
+
+
+void TestBuffer() {
+  /*测试缓冲区*/
+    // for (int n = 1; n <= 1000; n++) {
   //   printf("%d\n", n);
   //   for(int i=1; i <= 100; i++)
   //     printf("-", i);
   // }
+  printf("buffer-printf!!!\n");
   char c;
   read(0, &c, 1);
+}
 
-  // term_cursor_location(40, 40);
-  // printf("Hello World\n");
-  // system("pause");
-  // char c;
-  // printf("starting\n");
+void TestMoveCursor() {
+  term_cursor_location(40, 40);
+  printf("Hello World\n");
+  char c;
+  printf("starting\n");
+  fflush(stdout);
+  read(0, &c, 1);
+  fprintf(stdout,CLEAR_SCREEN);
+  InitializeGame();
+  PrintGame(map);
+  fflush(stdout);
+}
+
+void TestPointerSize() {
+    /*测试指针size*/
+  printf("sizeofvoid*: %d\n", sizeof(void*));
+  printf("sizeofchar*: %d\n", sizeof(char*));
+  printf("sizeofuint64: %d\n", sizeof(uint64));
+  fflush(stdout);
+}
+
+
+void TestClone() {
+
+}
+
+void thread(void *arg) {
+	int id = *(int*)arg;
+	printf("thread %d: started...\n", id);
+  // for(int i =0 ;;i++) {
+  //   printf("t");
+  // }
+  fflush(stdout);
+  exit(0);
+  // for(int i=0; ; i++) {
+  //       write(1, "t", 1);
+  // }
+}
+
+
+int main(){
+
+  printf("starting...\n");
+  
+  void* stack1;
+  stack1 = (void*) malloc(4096);
+  int* args1;
+  args1 = (int*) malloc(4);
+  *args1 = 1;
+
+  // void* stack2;
+  // stack2 = (void*) malloc(4096);
+  // int* args2;
+  // args2 = (int*) malloc(4);
+  // *args2 = 2;
+  // printf("user> function thread address:%p\n", &thread);
+  // printf("user> function thread:%p\n", thread);
+  // // printf("user> function TestPointerSize:%p\n", &TestPointerSize);
+  // printf("user> stack:%p\n", stack);
+  // printf("user> args:%p\n", args);
+  clone(&thread, args1, stack1);
+  // clone(&thread, args2, stack2);
+  // printf("user> after clone\n");
   // fflush(stdout);
-  // read(0, &c, 1);
-  // fprintf(stdout,CLEAR_SCREEN);
-  // InitializeGame();
-  // PrintGame(map);
-  // fflush(stdout);
+  char c;
+  read(0, &c, 1);
+  printf("user> after clone\n");
+  printf("%s\n", c);
+  // wait();
   exit(0);
   return 0;
 

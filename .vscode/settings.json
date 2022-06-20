@@ -30,6 +30,7 @@
     "param.h": "c",
     "sleeplock.h": "c",
     "ioctl.h": "c",
-    "limits.h": "c"
+    "limits.h": "c",
+    "date.h": "c"
   }
 }

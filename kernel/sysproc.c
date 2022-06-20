@@ -95,3 +95,17 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+// clone
+uint64 
+sys_clone(void)
+{
+  uint64 function, arg, stack;
+  if(argaddr(0, &function) < 0)
+    return -1;
+  if(argaddr(1, &arg) < 0)
+    return -1;
+  if(argaddr(2, &stack) < 0)
+    return -1;
+  return clone((void*)function, (void*)arg, (void*)stack);
+}

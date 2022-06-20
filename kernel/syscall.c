@@ -89,14 +89,6 @@ argaddr(int n, uint64 *ip)
   return 0;
 }
 
-int
-argtermios(int n, struct termios** pp)
-{
-  *pp = (struct termios*)argraw(n);
-  // printf("argaddr : %d\n", *ip);
-  return 0;
-}
-
 // Fetch the nth word-sized system call argument as a null-terminated string.
 // Copies into buf, at most max.
 // Returns string length if OK (including nul), -1 if error.
@@ -131,6 +123,8 @@ extern uint64 sys_wait(void);
 extern uint64 sys_write(void);
 extern uint64 sys_uptime(void);
 extern uint64 sys_ioctl(void);
+extern uint64 sys_clone(void);
+// extern uint64 sys_join(void);
 
 static uint64 (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -155,6 +149,8 @@ static uint64 (*syscalls[])(void) = {
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
 [SYS_ioctl]   sys_ioctl,
+[SYS_clone]   sys_clone,
+// [SYS_join]   sys_join,
 };
 
 void
