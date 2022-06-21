@@ -8,14 +8,19 @@
 #define SIZE 25
 #define MAX_X SIZE*2
 #define MAX_Y SIZE
-#define maxLength 50
+#define MIN_X 2
+#define MIN_y 2
+#define BOARD MAX_X + 4
+#define maxLength 100
 #define true 1
 #define false 0
 #define chrBorder "█"
 #define chrSnake "●"
 #define chrFood "★"
-#define chrExit ('n')
-#define chrRestart ('y')
+#define chrExit ('x')
+#define chrRestart ('r')
+#define chrStop ('b')
+#define chrContinue ('c')
 #define NIGHTMARE 1
 #define HARD 2
 #define MIDDLE 3
@@ -48,7 +53,7 @@ bool eaten = 0;
 int  difficulty = 5;
 
 // 清屏
-#define CLEAR_SCREEN    fprintf(stdout, "\033[2J")
+#define CLEAR_SCREEN    fprintf(stdout,  "\033[1;1H\033[2J")
 
 // 控制光标位置
 #define term_cursor_location(x,y) fprintf(stdout, "\033[%d;%dH" ,y,x)
@@ -58,33 +63,38 @@ struct termios termios, original_termios;
 
 
 void init();
+void init_snake(); 
 void draw_border();
 void draw_on_pos(Pos pos, char* chr);
+
+void print_score();
+void print_help();
+
 Pos getRandomPos();
 Pos getFoodPos();
 bool isPosEqual(const Pos p1, const Pos p2);
 bool inSnake(const Pos pos);
 
 
-void print_score();
-
 void gameOver();
 void gameVictory();
 
+void restart();
 
 void cursor_to_bottom()
 {
-  term_cursor_location(0, SIZE + 2);
+  term_cursor_location(1, MAX_Y + 1);
 }
 
 void cursor_to_center()
 {
-  term_cursor_location(1 + SIZE, 1 + SIZE/2);
+  term_cursor_location(1 + MAX_X/2, 1 + MAX_Y/2);
 }
 
+// 原点是(1,1)
 void cursor_to_origin()
 {
-  term_cursor_location(0, 0);
+  term_cursor_location(1, 1);
 }
 
 void init_term(){
@@ -184,11 +194,11 @@ void init_snake()
 void draw_border()
 {
 int i, j;
-for(i = 0;i <= SIZE*2 + 1;i++)
+for(i = 1; i <= MAX_X + 1; i++)
 {
-  for(j = 0;j <= SIZE + 1;j++)
+  for(j = 1; j <= MAX_Y + 1; j++)
   {
-    if(i == 0 || j == 0 || i == MAX_X + 1 || j == MAX_Y + 1)
+    if(i == 1 || j == 1 || i == MAX_X + 1 || j == MAX_Y + 1)
     {
       // MoveToPos(i * 2, j);
       term_cursor_location(i, j);
@@ -199,17 +209,31 @@ for(i = 0;i <= SIZE*2 + 1;i++)
 //  printf("\n");
 }
 
+// 初始化
 void init() {
   CLEAR_SCREEN;
-  init_term();
   // init_map();
   init_snake();
   food = getFoodPos();
+  draw_border();
+  draw_on_pos(food, chrFood);
+  print_score();
+  print_help();
   gameStatus = RUNNING;
- 
+  fflush(stdout);
+}
+
+void restart() {
+  CLEAR_SCREEN;
+  init_snake();
+  food = getFoodPos();
+  // difficulty = EASY;
+  draw_on_pos(food, chrFood);
   draw_border();
   print_score();
-  draw_on_pos(food, chrFood);
+  print_help();
+  gameStatus = RUNNING;
+  fflush(stdout);
 }
 
 
@@ -237,8 +261,8 @@ void logic()
 
   // 判断是否撞墙或撞到自己
   if(inSnake(newHeadPos)
-    || newHeadPos.x < 1 || newHeadPos.x > MAX_X
-    || newHeadPos.y < 1 || newHeadPos.y > MAX_Y
+    || newHeadPos.x < 2 || newHeadPos.x > MAX_X
+    || newHeadPos.y < 2 || newHeadPos.y > MAX_Y
   )
   {
       cursor_to_origin();
@@ -275,38 +299,32 @@ void draw_on_pos(Pos pos, char* chr)
   printf(chr);
 }
 
-// void draw_snake_head() 
-// {
-//   Pos head = snake.pos[snake.head];
-//   term_cursor_location(tail.x, tail.y);
-//   printf(chrSnake);
-// }
-
-// void draw_black_on_tail()
-// {
-//   Pos tail = snake.pos[snake.length-1];
-//   term_cursor_location(tail.x, tail.y);
-//   printf('');
-// }
-
-
 void draw()
 {
   cursor_to_origin();
 	if(gameStatus != RUNNING)
 		return;
+  // 画出蛇头
 	draw_on_pos(snake.pos[snake.head], chrSnake);
 	if(eaten == 0){
+    // 擦除蛇尾
     int tail = (snake.head + maxLength - snake.length) % maxLength;
 		draw_on_pos(snake.pos[tail], " ");
 	} else {
+    // 新的食物
     draw_on_pos(food, chrFood);
     print_score();
   }
+  
 }
 
 void game()
 {
+  while (gameStatus == WAITING)
+  {
+    sleep(5);
+  }
+
   if(gameStatus == OVER)
 		gameOver();
 	else if(gameStatus == VICTORY)
@@ -316,10 +334,13 @@ void game()
 		logic();
 		draw();
 	}
-	else if(gameStatus == WAITING)
-	{
-		// do nothing.
-	}
+	// else if(gameStatus == WAITING)
+	// {
+  //   // fflush(stdout);
+	// 	// while (gameStatus == WAITING)
+  //   // {}
+	// }
+  fflush(stdout);
 }
 
 //multi-thread
@@ -329,8 +350,8 @@ void logic_thread(void *arg)
 	// printf("thread %d: started...\n", id);
   while(sleep(difficulty), gameStatus != EXIT){
     game();
-    draw();
-    fflush(stdout);
+    // draw();
+    // fflush(stdout);
   }
 	exit(0);
 }
@@ -340,27 +361,44 @@ void gameOver()
 {
 	// cursor_to_bottom();
   // CLEAR_SCREEN;
-  term_cursor_location(SIZE -5, SIZE/2 -1);
-  printf("Game over!\n");
+  term_cursor_location(BOARD, 8);
+  printf("寄...");
   // term_cursor_location(0, 0);
-  term_cursor_location(10 , SIZE/2 + 1);
-  printf("Snake length: %d ! press %c to restart OR press %c to exit\n",snake.length, chrRestart, chrExit);
+  term_cursor_location(BOARD , 9);
+  printf("按 \'%c\' 重新开始 或者  \'%c\' 退出\n", chrRestart, chrExit);
 	gameStatus = WAITING;
 }
 
 void gameVictory()
 {
 	// CLEAR_SCREEN;
-  term_cursor_location(SIZE, SIZE/2);
-	printf("Vicotry! press %c to restart OR press %c to exit\n", chrRestart, chrExit);
+  term_cursor_location(BOARD, 8);
+  printf("芜湖!!!!!!!!\n");
+  term_cursor_location(BOARD, 9);
+	// printf("Press \'%c\' to restart OR press \'%c\' to exit\n", chrRestart, chrExit);
+  printf("按 \'%c\' 重新开始 或者  \'%c\' 退出\n", chrRestart, chrExit);
 	gameStatus = WAITING;
 }
 
 void print_score()
 {
-  term_cursor_location(SIZE*2 + 2, 0);
-  printf("Your score: %d", snake.length * 10 -10);
-  term_cursor_location(SIZE*2 + 2, 0);
+  term_cursor_location(MAX_X + 4, 1);
+  printf("当前分数: %d", snake.length * 10 -10);
+}
+
+void print_help()
+{
+  term_cursor_location(MAX_X + 4, 2);
+  printf("-------------------------------------\n");
+  term_cursor_location(MAX_X + 4, 4);
+  printf("w, a, s, d 控制移动");
+  term_cursor_location(MAX_X + 4, 5);
+  printf("1, 2, 3, 4 调节速度");
+  term_cursor_location(MAX_X + 4, 6);
+  printf("b 暂停游戏    c 继续游戏");
+  term_cursor_location(MAX_X + 4, 7);
+  printf("x 退出游戏");
+
 }
 
 
@@ -380,20 +418,25 @@ void main_thread()
 		read(0, &c, 1);
 		if(gameStatus == WAITING)
 		{
-			while(c != chrRestart && c != chrExit)
+			while(c != chrRestart && c != chrExit && c != chrContinue)
 			{
 				read(0, &c, 1);
 			}
 			if(c == chrRestart)
 			{
-				init();
+				// init();
+        restart();
 				continue;
 			}
-			else
+			else if(c == chrExit)
 			{
 				gameStatus = EXIT;
 				break;
 			}
+      else
+      {
+        gameStatus = RUNNING;
+      }
 			
 		}
 		else if(gameStatus == RUNNING || gameStatus == BEGINNING)
@@ -439,6 +482,9 @@ void main_thread()
         case chrExit:
 					gameStatus = EXIT;
 					break;
+        case chrStop:
+          gameStatus = WAITING;
+          break;
 				default:
 					continue;
 			}
@@ -466,10 +512,13 @@ int main(int argc, char **argv)
   arg = (int*) malloc(4);
   *arg = 1;
 
+  // ioctl
+  init_term();
+
   // 游戏初始化
   init();
 
-  // 运行子线程，根据状态，进行绘制的逻辑判断
+  // 运行子线程，根据状态，进行绘制时的逻辑判断
 	clone(logic_thread, arg, stack);
 
   // 运行主线程，用于接收键盘输入，修改当前状态 
