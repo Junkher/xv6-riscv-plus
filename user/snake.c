@@ -5,20 +5,21 @@
 #include "include/termios.h"
 #include "include/math.h"
 
-#define SIZE 40
+#define SIZE 25
 #define MAX_X SIZE*2
 #define MAX_Y SIZE
-#define maxLength 100
+#define maxLength 50
 #define true 1
 #define false 0
 #define chrBorder "█"
 #define chrSnake "●"
 #define chrFood "★"
-#define chrExit ('x')
+#define chrExit ('n')
 #define chrRestart ('y')
-#define HARD 1
+#define NIGHTMARE 1
+#define HARD 2
 #define MIDDLE 3
-#define EASY 5
+#define EASY 4
 typedef enum{DOWN, UP, LEFT, RIGHT} Dir;
 typedef enum{BEGINNING, RUNNING, OVER, VICTORY, WAITING, EXIT} GameStatus;
 typedef int bool;
@@ -81,6 +82,11 @@ void cursor_to_center()
   term_cursor_location(1 + SIZE, 1 + SIZE/2);
 }
 
+void cursor_to_origin()
+{
+  term_cursor_location(0, 0);
+}
+
 void init_term(){
   tcgetattr(0, &termios);
   original_termios = termios;
@@ -103,8 +109,8 @@ void restore_term(){
 Pos getRandomPos()
 {
 	Pos pos;
-	pos.x = random(2, SIZE -10);
-	pos.y = random(2, SIZE -10);
+	pos.x = random(2, MAX_X);
+	pos.y = random(2, MAX_Y);
 	return pos;
 }
 
@@ -182,7 +188,7 @@ for(i = 0;i <= SIZE*2 + 1;i++)
 {
   for(j = 0;j <= SIZE + 1;j++)
   {
-    if(i == 0 || j == 0 || i == SIZE*2+1 || j == SIZE + 1)
+    if(i == 0 || j == 0 || i == MAX_X + 1 || j == MAX_Y + 1)
     {
       // MoveToPos(i * 2, j);
       term_cursor_location(i, j);
@@ -190,7 +196,7 @@ for(i = 0;i <= SIZE*2 + 1;i++)
     }
   }
 }
- printf("\n");
+//  printf("\n");
 }
 
 void init() {
@@ -235,7 +241,10 @@ void logic()
     || newHeadPos.y < 1 || newHeadPos.y > MAX_Y
   )
   {
+      cursor_to_origin();
+      // printf("head y pos:%d", snake.pos[snake.head].y);
       gameStatus = OVER;
+      return;
   }
   
   // 移动蛇头
@@ -261,6 +270,7 @@ void logic()
 
 void draw_on_pos(Pos pos, char* chr)
 {
+  cursor_to_origin();
   term_cursor_location(pos.x, pos.y);
   printf(chr);
 }
@@ -282,6 +292,7 @@ void draw_on_pos(Pos pos, char* chr)
 
 void draw()
 {
+  cursor_to_origin();
 	if(gameStatus != RUNNING)
 		return;
 	draw_on_pos(snake.pos[snake.head], chrSnake);
@@ -329,11 +340,11 @@ void gameOver()
 {
 	// cursor_to_bottom();
   // CLEAR_SCREEN;
-  term_cursor_location(SIZE, SIZE/2);
+  term_cursor_location(SIZE -5, SIZE/2 -1);
   printf("Game over!\n");
-  term_cursor_location(0, 0);
-  // term_cursor_location(SIZE*2  + 1, SIZE);
-  printf("Snake length: %d\npress %c to restart\npress %c to exit\n",snake.length, chrRestart, chrExit);
+  // term_cursor_location(0, 0);
+  term_cursor_location(10 , SIZE/2 + 1);
+  printf("Snake length: %d ! press %c to restart OR press %c to exit\n",snake.length, chrRestart, chrExit);
 	gameStatus = WAITING;
 }
 
@@ -341,18 +352,21 @@ void gameVictory()
 {
 	// CLEAR_SCREEN;
   term_cursor_location(SIZE, SIZE/2);
-	printf("Vicotry!\npress %c to restart\npress %c to exit\n", chrRestart, chrExit);
+	printf("Vicotry! press %c to restart OR press %c to exit\n", chrRestart, chrExit);
 	gameStatus = WAITING;
 }
 
 void print_score()
 {
-  term_cursor_location(SIZE*2 + 2, 2);
+  term_cursor_location(SIZE*2 + 2, 0);
   printf("Your score: %d", snake.length * 10 -10);
+  term_cursor_location(SIZE*2 + 2, 0);
 }
 
+
 void end(){
-  cursor_to_bottom();
+  CLEAR_SCREEN;
+  cursor_to_origin();
   printf("Bye\n");
   restore_term();
   exit(0);
@@ -419,6 +433,9 @@ void main_thread()
         case '3':
           difficulty = HARD;
           break;
+        case '4':
+          difficulty = NIGHTMARE;
+          break;
         case chrExit:
 					gameStatus = EXIT;
 					break;
@@ -442,22 +459,26 @@ int main(int argc, char **argv)
 	// 	*args[i] = i;
 	// }
  
+  //为子线程的函数运行分配栈空间  
   void* stack;
   stack = (void*) malloc(4096);
   int* arg;
   arg = (int*) malloc(4);
   *arg = 1;
 
+  // 游戏初始化
   init();
 
-  // draw_snake();
-
+  // 运行子线程，根据状态，进行绘制的逻辑判断
 	clone(logic_thread, arg, stack);
-  // join();
+
+  // 运行主线程，用于接收键盘输入，修改当前状态 
   main_thread();
 
+  // 等待子线程结束
   join();
-  // gameOver();
+
+  // 退出
 	end();
   return 0;
 }
