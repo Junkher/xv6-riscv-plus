@@ -105,8 +105,8 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
-  int isthread;
-  void* ustack;
-  int tid;        //Record the VA of thread's trapframe
-  int tfcount;
+  int isthread;                // 0 is process, 1 is thread
+  void* ustack;                //Stack pointer
+  int tid;                     //Record the VA of thread's trapframe
+  int tfcount;                 //Count of child threads, for main thread(process)
 };

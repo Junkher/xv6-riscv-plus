@@ -174,9 +174,9 @@ void init_snake()
   snake.pos[0].x = SIZE / 2;
 	snake.pos[0].y = SIZE / 2;
   // snake.pos[1].x = SIZE / 2 + 1;
-	// snake.pos[1].y = SIZE / 2;
+	// snake.pos[1].y = SIZE / 2 + 1;
   // snake.pos[2].x = SIZE / 2 + 2;
-	// snake.pos[2].y = SIZE / 2;
+	// snake.pos[2].y = SIZE / 2 + 2;
   // for(int i = 0; i < snake.length; i++) {
   //   draw_on_pos(snake.pos[i], chrSnake);
   // }
@@ -209,6 +209,25 @@ for(i = 1; i <= MAX_X + 1; i++)
 //  printf("\n");
 }
 
+void draw_face()
+{
+  Pos p;
+  p.x = 3;
+  p.y = 3;
+  for(int i = 0; i < 10; i++ ) {
+    p.x = MAX_X/2 - 5 -i;
+    p.y = 10;
+    draw_on_pos(p, chrBorder);
+  }
+  for(int i = 0; i < 10; i++ ) {
+    p.x = i + MAX_X/2 + 5;
+    p.y = 10;
+    draw_on_pos(p, chrBorder);
+  }
+
+
+}
+
 // 初始化
 void init() {
   CLEAR_SCREEN;
@@ -216,6 +235,7 @@ void init() {
   init_snake();
   food = getFoodPos();
   draw_border();
+  // draw_face();
   draw_on_pos(food, chrFood);
   print_score();
   print_help();

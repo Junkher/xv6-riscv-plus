@@ -92,7 +92,6 @@ consolewrite(int user_src, uint64 src, int n)
 int
 consoleread(int user_dst, uint64 dst, int n)
 {
-  // printf("consoleread start...");
   uint target;
   int c;
   char cbuf;
@@ -136,7 +135,6 @@ consoleread(int user_dst, uint64 dst, int n)
     }
   }
   release(&cons.lock);
-  // printf("consoleread finished---");
   return target - n;
 }
 
@@ -144,37 +142,13 @@ consoleread(int user_dst, uint64 dst, int n)
 int
 consoleioctl(int request, uint64 termios_p)
 {
-  // printf("Into consoleioctl\n");
-  // struct termios *termios_p;
-  // uint64 termios_p = (uint64)&termios;
-  // uint64 termios_p;
   if(request != TCGETA && request != TCSETA)
     return -1;
-  // printf("TC\n");
-  //tocheck 
-  // if(argaddr(2, &termios_p) < 0){
-  //   //  printf("if");
-  //    return -1;
-  // }
-
-  /*debug
-  printf("In consoleioctl, termios_p: %d\n", termios_p);
-  printf("In consoleioctl, cons.termios_p: %p\n", &cons.termios);
-  printf("In consoleioctl, cons.termios.c_lflag: %x\n", cons.termios.c_lflag);
-  printf("ECHO: %d\n", ECHO);
-  printf("ICANON: %d\n", ICANON);
-  printf("Size: %d\n", sizeof(struct termios));
-  */
-
   // printf("c_flag:%d\n", *termios_p->c_lflag);
   // printf("In consoleioctl, 2048.termios.c_lflag: %x\n", ((struct termios*)termios_p)->c_lflag);
   if(request == TCGETA)
-    // *termios_p = cons.termios;
-    //  termios_p->c_lflag = cons.termios.c_lflag;
     either_copyout(1, termios_p, &cons.termios, sizeof(struct termios));
   else
-    // cons.termios = *termios_p;
-    // cons.termios = *(struct termios*)termios_p;
     {
       either_copyin(&cons.termios, 1, termios_p, sizeof(struct termios));
       // printf("In TCSETA, cons.termios.c_lflag: %x\n", cons.termios.c_lflag);
